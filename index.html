@@ -1,46 +1,237 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mapa Parque Field</title>
+<title>Mapa de Robos</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-html,body{height:100%;margin:0;font-family:system-ui,sans-serif}
+:root{--bg:#131c2b;--bg2:#17202e;--bg3:#0f1722;--line:#2a3648;--fg:#e6ebf2;--mut:#9aa7b8;--acc:#ff8a1f;--col:#ff8a1f;--trans:#3b9cff;--nd:#8892a0;--ok:#35c26b}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--fg)}
+body{display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:14px;padding:8px 14px;background:var(--bg);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.logo{background:#fff;border-radius:8px;height:42px;min-width:114px;display:flex;align-items:center;justify-content:center;padding:0 10px;overflow:hidden}
+.logo img{max-height:32px;max-width:110px;display:block}
+.logo .wm{font:800 17px/1 system-ui,sans-serif;letter-spacing:.5px;color:#14338f;font-style:italic}
+.ttl{min-width:0;flex:1 1 220px}
+.ttl b{display:block;font-size:15px}
+.ttl small{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);line-height:1.5}
+.ttl small.dim{opacity:.7}
+.stats{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stat{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:5px 14px;text-align:center;min-width:58px}
+.stat b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
+.stat span{font-size:11px;color:var(--mut)}
+.pill{display:flex;align-items:center;gap:8px;border:1px solid #1f6b3d;background:#12301f;color:var(--ok);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700}
+.pill.off{border-color:#7a2b2b;background:#321616;color:#ff6b6b}
+.pill button{background:none;border:0;color:inherit;cursor:pointer;font-size:14px;padding:0}
+.btn{background:var(--bg2);border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:8px 14px;font:600 12px inherit;cursor:pointer}
+.btn:hover{color:var(--fg)}
+#wrap{position:relative;flex:1;min-height:0}
 #map{position:absolute;inset:0}
-.bar{position:absolute;z-index:1000;top:10px;left:56px;right:10px;max-width:340px;background:#fff;padding:8px 12px;border-radius:6px;box-shadow:0 1px 6px rgba(0,0,0,.3);font-size:13px}
-.bar b{font-size:14px}
-.bar input{width:100%;box-sizing:border-box;margin-top:6px;padding:6px;border:1px solid #bbb;border-radius:4px}
-.pop{width:260px}
-.pop h3{margin:0 0 6px;font-size:15px}
-.pop img{width:100%;max-height:220px;object-fit:cover;border-radius:4px;display:block;background:#eee;min-height:80px}
-.pop a{display:inline-block;margin-top:6px;font-size:12px}
+.filters{position:absolute;z-index:1000;top:10px;left:56px;width:260px;max-width:calc(100% - 66px);background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;box-shadow:0 4px 16px rgba(0,0,0,.4);font-size:12px}
+.filters h4{margin:0 0 8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.chips{display:grid;gap:6px}
+.chk{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg3);cursor:pointer;font-size:13px;font-weight:600}
+.chk input{width:16px;height:16px;margin:0;accent-color:var(--acc)}
+.chk i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.chk span{flex:1}
+.chk em{font-style:normal;color:var(--mut);font-variant-numeric:tabular-nums}
+.chip{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--bg3);color:var(--fg);border-radius:999px;padding:5px 10px;font:600 12px inherit;cursor:pointer}
+.chip i{width:9px;height:9px;border-radius:50%;background:var(--c,var(--mut))}
+.chip em{font-style:normal;color:var(--mut);font-variant-numeric:tabular-nums}
+.chip.on{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.filters input{width:100%;margin-top:10px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg3);color:var(--fg)}
+.pin{display:block;width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--c);border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5)}
+.leaflet-popup-content-wrapper{background:var(--bg2);color:var(--fg);border-radius:12px;padding:0;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.leaflet-popup-content{margin:0;width:300px!important}
+.leaflet-popup-tip{background:var(--bg2)}
+.leaflet-container a.leaflet-popup-close-button{color:var(--mut);top:10px;right:10px;font-size:22px}
+.card{padding:16px 16px 14px}
+.card h3{margin:0;font-size:18px;color:#fff;padding-right:22px}
+.alt{color:var(--acc);font-weight:700;font-size:13px;margin:2px 0 8px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--bg3);margin-bottom:10px}
+.badge i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.tabs{display:flex;gap:4px;margin-bottom:8px}
+.tabs button{flex:1;border:0;padding:6px;border-radius:6px;background:var(--bg3);color:var(--mut);font:600 12px inherit;cursor:pointer}
+.tabs button.on{background:var(--acc);color:var(--bg2)}
+.ph{width:100%;height:190px;border-radius:4px;overflow:hidden;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:#6f7d90;font-size:12px;text-align:center}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph[hidden]{display:none}
+.meta{margin-top:12px;display:grid;gap:4px;font-size:12px;color:var(--mut)}
+.meta .d{color:#c3ccd8;font-size:13px}
+.meta b{color:var(--fg);font-weight:600}
+.open{display:inline-block;margin-top:10px;font-size:12px;color:var(--acc)}
+#tabla{position:absolute;inset:0;z-index:1100;background:var(--bg);overflow:auto;padding:12px 14px}
+#tabla[hidden]{display:none}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{position:sticky;top:-12px;background:var(--bg);color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--bg2)}
+@media(max-width:560px){.ttl small.dim{display:none}.stat{padding:4px 10px}}
 </style></head><body>
-<div class="bar"><b>Parque Field</b> · <span id="n"></span> puntos
-<input id="q" type="search" placeholder="Buscar calle o altura..."></div>
-<div id="map"></div>
+<header>
+  <div class="logo"><img id="logo" src="logo.png" alt="Autotrol" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'wm',textContent:'AUTOTROL'}))"></div>
+  <div class="ttl"><b>Mapa de Robos</b><small>Inspección de artefactos</small><small class="dim">Desarrollado por Martin Cipriani · Versión 2.0</small></div>
+  <div class="stats">
+    <div class="stat"><b id="sTotal">0</b><span>Total</span></div>
+    <div class="stat"><b id="sMapa">0</b><span>En mapa</span></div>
+    <div class="pill" id="pill"><span id="pillTxt">● En línea</span><button id="refresh" title="Recargar" aria-label="Recargar">⟳</button></div>
+    <button class="btn" id="btnTabla">☰ Tabla</button>
+  </div>
+</header>
+<div id="wrap">
+  <div id="map"></div>
+  <div class="filters">
+    <h4>Mostrar artefactos</h4>
+    <div class="chips" id="chips"></div>
+    <input id="q" type="search" placeholder="Buscar calle, altura o descripción...">
+  </div>
+  <div id="tabla" hidden><table><thead><tr><th>Calle</th><th>Altura</th><th>Tipo</th><th>Fecha</th><th>Descripción</th></tr></thead><tbody id="tbody"></tbody></table></div>
+</div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// [calle, altura, lat, lon, idFotoDrive]
-const DATA=[["Bardas", 2057, -32.892768, -60.707468, "1qaJcCuL152QrC-S7DWo1A3LNtfbeZqIk"], ["Guido y spano", 2461, -32.891742, -60.708085, "1Rv3738_Wugw0AlAnNa2UalYSXVr8oxEJ"], ["Guido y spano", 2500, -32.889762, -60.70908, "1G3Zp_cKve0NDqvAAYBM68FXoPmbfkQpt"], ["Masana", 2553, -32.890253, -60.709441, "1W3CQM0LmDFex_1s1wkyZItXnHuRCst5H"], ["Ludueña", 2185, -32.893285, -60.709993, "1fixHKWFPeNRPwtm2u7c7Giejf4Myaq86"], ["Herrero miranda", 2500, -32.891745, -60.710659, "1IvJaMYYNZptb_Dta7Zv4RuIs_9DCH9UK"], ["Carcova", 2230, -32.890212, -60.71147, "1K2ts1l4bexJuoTyIpzGqCT6GeUcrGWxA"], ["J. Nicolas", 2500, -32.890657, -60.712407, "1DvbtGWbwSnzGGGH18Wdj2yMahNl30Yf5"], ["Schiaffino", 2250, -32.890667, -60.71185, "1LoyEREtn8pUhEUliX6oeneDfma6pE-tL"], ["Ana frank", 532, -32.891119, -60.711693, "1wd673fjtiKEmgmMhZbBBHhztlNx3GUxG"], ["Ana frank", 2350, -32.893271, -60.711498, "1lsPn8i5739x9tDXC1_AuOOwiPOlP6Za4"], ["J. Nicolas", 2326, -32.892885, -60.712188, "1TpPzoIg666pB2LAT-5Z7hwIKGPZlYEVd"], ["Carmignani", 2552, -32.890298, -60.710063, "17Z7mnEWHdaQZgnLQVZF53VtmbUs2PkFF"], ["Masana", 2526, -32.890877, -60.709595, "1JxC6JgswZW7usYFgzPtexO00OW5CB6nk"], ["Herrero miranda", 2485, -32.892108, -60.710504, "1DagkqVrmmsozeVj-4zw8rTTducnSBJ47"], ["Bardas", 2109, -32.892785, -60.708707, "1_V4_suTGz0kzOiujyXTCydE1nflCnvvj"], ["Bardas", 2137, -32.892777, -60.709441, "1IeDK-_ct4vReez8c6WdeE2Op1wgXqkZ3"], ["Bardas", 2145, -32.892743, -60.709542, "16nsE1geredTwRJwHJU9NMF02Yh6PQ8RR"], ["Bardas", 2189, -32.89272, -60.71044, "1G7Xd_tcaRkWKOXEFXfAmwuU_TeRgN7cQ"], ["Ludueña", 1886, -32.893395, -60.70769, "1TrDtjEs3Idux3TrIN0QmdUxetjPupmjj"], ["Zerva", 2506, -32.89187, -60.713443, "18tYEvL2y_jbv1XnHabcTdYO9dI8a-PH9"], ["Zerva", 2462, -32.892553, -60.713642, "15rOAyslajWA03hO76NQHkvEW8_BwXftM"], ["Zerva", 2462, -32.892757, -60.713917, "1RfGLKwIImknk6e5lWuiOsUHR5b2M0I--"], ["Zerva", 2347, -32.892982, -60.713475, "1lmgvw9Saf68phEnmPEgj_4sjqvneC8HW"], ["Fontana", 2330, -32.89307, -60.713913, "1W3QaSum1iBa9geeKE5yKalN2o_aH4yOz"], ["Brazilia", 2589, -32.890367, -60.714672, "1cfLVnnV0I9ZoH_8uDs6fpOc8oAvNmG28"], ["Brazilia", 2612, -32.890596, -60.714637, "1aWGEv139GXRrnadW9jbbRmL-swP8lDIW"], ["Brazilia", 2552, -32.890808, -60.714577, "1kdzIhP7noTs-KdleXWVPigpE9btQ31Cl"], ["Brazilia", 2540, -32.891043, -60.714577, "19nS-EAOENX1CReJq7CwBgUm8p_h_74nk"], ["Brazilia", 2380, -32.89283, -60.714564, "1FaYKzNh7L4VOb7OASle_pwgtt6LU_l-0"], ["Brasilia", 2374, -32.892902, -60.714553, "1G9D-5qXKeIGpp-H92dXaJvmhc6RhYaEK"], ["Camañ", 2400, -32.893127, -60.716422, "1hbxsoQz8TNV8zZTm1QhFGgtuBcnsttbc"], ["Camaña", 2400, -32.893342, -60.716248, "1LN-Vagyh6H3JiORcDUEh5k0b8Q9f8qZa"], ["Camaña", 2312, -32.89365, -60.716284, "10TNpa8ZQNdFPNjDoFDNHbC0YSywyA5Zg"], ["Fornells", 2338, -32.892022, -60.717215, "18rRHM0ArrZXojsx-vvfkEwYazTnI8JoF"], ["Fornells", 2402, -32.891921, -60.716951, "1UlgVeUQuD5HPR54NaD7RWEMb1NhGJEPa"], ["Fornells", 2426, -32.891404, -60.716718, "147xv_5dP8djS70Jkymv5J_ReZaXi4lm0"], ["Fornells", 2440, -32.891155, -60.716433, "1bs0I3yAG92LoseKZ39jxND8IPgKlhCoz"], ["Fornells", 2577, -32.890762, -60.715985, "1N_qrknxu6AIOC3hWeVD4ex5nJ8qbeLJ7"], ["Fornells", 2577, -32.89054, -60.715883, "1kSTMG7xFqSS0MpiLr4MZ3IbrIhxGzY69"], ["Pagano", 2551, -32.890358, -60.715996, "18cM6_XKM1AaH-Qvb1g_d5b85cFDg5xES"], ["Pagano", 2500, -32.890402, -60.715997, "1Hpt6R_G_bQAtUL7cbVhp966tpYNZcO7-"], ["Pagano", 2500, -32.890412, -60.716012, "1OFS0seGBSUnlzKTitNlLO_RT-RaMDkLZ"], ["Pagano", 2500, -32.890969, -60.715536, "1h5Wa4p7NLCQM6s6aZ3MLPinmFQdw9yes"], ["Castex", 2549, -32.892063, -60.716762, "1bct4iJz2Djh8m1MyoLYtrNWKeUtsN8oX"], ["Castex", 2500, -32.891958, -60.716852, "1wvgXTEzaxAi1GbtUN4T4m6YfMv7YOu18"], ["Schiavoni", 2586, -32.890532, -60.715215, "1XVH6AOwF8n-4jono9rCiXPChm3HDM7KW"], ["Carcova", 2400, -32.890223, -60.715062, "1_bLLmLUv2VLVi35t2Q_htc5PGygEc05X"], ["Carcova", 2400, -32.890218, -60.715253, "1BIXTNxvOymlaLQM8VAmPb1hpZEn1I4wF"], ["Carcova", 2450, -32.890257, -60.715273, "1YMu8fQgjY_SZtjpFt3Jxm6lITltv0B4o"], ["Carcova", 2400, -32.890328, -60.714718, "1pivtG8BycpBB9JErx02ASX1XDMePi3Ka"], ["Carcova", 2300, -32.890155, -60.714278, "1fWB_XuLjsMInwMZvmuwkgD3f4xWaZSdS"], ["Baigorria", 2630, -32.893569, -60.718652, "1ASCuMO8ECNZ0CS5pRI9aTfKtkBW0Vd3v"], ["Baigorria", 2630, -32.893482, -60.71868, "1nPO2sondyafNDdfh4mYhDfL1pchyhFvp"], ["Baigorria", 2630, -32.89261, -60.718264, "1lTgwCfsiWHHGmVGybPG0SKwm1SoA4ySz"], ["Baigorria", 2630, -32.893468, -60.718653, "1xmJf4LfPDWkisvJjLbDD5Aj9yUm17z0F"], ["Baigorria", 2630, -32.893162, -60.719147, "162Kk5DLzKxtnkbPSveRcric0g0bX_tE8"], ["Baigorria", 2630, -32.893044, -60.717962, "1W45V81OX77Xh22vMSr7PDXMLH5xyExgp"], ["Juan pablo ll", 2500, -32.892526, -60.718257, "1E3nKjauitjBgI69cuRmodPPARJeRSkOH"], ["Juan pablo ll", "2500 bis", -32.892259, -60.718127, "1J_q3i8L12tmffTyplysZgF4u3X8migly"], ["Juan pablo ll", 2358, -32.892268, -60.718, "1B4DmxkLKv571I-xc-F6PO5NkAzuAEzkk"], ["Juan pablo ll", 2366, -32.892079, -60.7177, "1hs5Cr3XPI50kpMh6BIgugLY0mdG6_S7q"], ["Juan pablo ll", 2388, -32.891936, -60.717641, "1EUcbW1X8wKG-acAqMc57cpUq0IcME6Rd"], ["Juan pablo ll", 2388, -32.891792, -60.717548, "1etiuBrPbQkYE6xP8pE8TG3JTu8XYWchV"], ["Juan pablo ll", 2402, -32.891658, -60.717429, "1tQ7X6dhL85RB2aGvGnevMRHglgTK91v3"], ["Juan pablo ll", 2408, -32.891421, -60.717307, "1dMknaYCgAmeRWlqW0zWvFZ4C67SWcOy_"], ["Juan pablo ll", 2414, -32.891292, -60.717253, "1IZV-obU0xjhE0vp3FYNCpQeUP6FV-b7Y"], ["Juan pablo ll", 2432, -32.891235, -60.717103, "1QWWNzl2Th4jmM_is2eX-Py7ZBQiLhY7f"], ["Juan pablo ll", 2440, -32.890879, -60.716811, "1zU8fEwdPiVbcDr6kGvMeMgRAR-lQFLL0"], ["Juan pablo ll", 2446, -32.890922, -60.716819, "1wuus542Ma7N9gO-FXOeTaQG5epDokxk5"], ["Juan pablo ll", 2560, -32.890802, -60.7167, "1GTDG01FAdtf-bo0DJVE38TdsDVMlYstK"], ["Juan pablo ll", 2576, -32.890551, -60.716431, "1_mo-0R4g2NnwTfuLskTONXVpjFJmVDFw"], ["Juan pablo ll", 22584, -32.890376, -60.716474, "1c7IgPlBp_s35PsWLZlGDBBLbbo_Iyoyl"], ["Juan pablo ll", 2600, -32.890093, -60.715926, "1D7_AewZm0NwChDBhNhpO9jJczJP2RlMh"], ["Juan pablo ll", 2600, -32.890005, -60.715824, "1DFKCwtcPXyWIBmJLh_sBICT1Gpyj7ykY"], ["Kennedy", 2300, -32.88975, -60.715546, "1W2pYcmX_e5xnrJa9eNms3wvejJWjEduH"], ["Kennedy", 2300, -32.889474, -60.715174, "1O8EVzjo3xxuDHuWd-7xjJ8uiHUMCKSsg"], ["Kennedy", 2300, -32.889678, -60.714525, "1k-0h-3hPO84wE_jPNoKAna3Jo6hN46_Y"], ["Kennedy", 2300, -32.889743, -60.7142, "12EqColUOKJ-8UBSgh55kd_pzMBjV_aR3"], ["Kennedy", 2200, -32.889758, -60.713827, "1aagOtTgL8UsB1by5R7OxgZdS26oI0QuR"], ["Kennedy", 2200, -32.889798, -60.71364, "1FgDf2u99fFjdVfGnY44KrLN63jMh1cQD"], ["Kennedy", 2200, -32.889875, -60.713233, "1zeTfvA9yzJ60x2GdqP-YrkxpUxiEeSJa"], ["Kennedy", 2200, -32.889783, -60.713105, "1W8WVjajykry2qmovPlC925MCremPWEVN"], ["Kennedy", 2200, -32.889384, -60.712591, "124TEMO4a-V3xB7fhXXdyShAAQRS3k6pg"], ["Kennedy", 2200, -32.889712, -60.712283, "1WjZebgimSlNY4Sn-6zJUX68uPXVEFvY3"], ["Kennedy", 2200, -32.88976, -60.713048, "1zaNdSgmAuF9URmrvawm7gmG6UfZVmic0"], ["Kennedy", 2200, -32.8894, -60.713132, "1BpWzDRHVQz1nF73aX3tb55ryHmAj4lcW"], ["Kennedy", 2200, -32.889769, -60.713191, "1ig075ey9TFyRnPEJ2dCfMw7IbttjLsrX"], ["Kennedy", 2200, -32.88981, -60.713027, "1g5b9pt3eHQ67k2Fzi6RMW1oWV4FfMIYg"], ["Kennedy", 2200, -32.889903, -60.712737, "1n6Gaz-3sihw15uXWOBgWvbgPxNoSCLJG"], ["Kennedy", 2200, -32.889787, -60.713147, "1UDQwenjxDAoTYtOJRkZLPQOsQjkbBmP9"], ["Kennedy", 2200, -32.889665, -60.711973, "1o7wv_ETpfo9BcosyOVtaYhAx-YfAC1jT"], ["Kennedy", 2200, -32.889525, -60.711907, "1ZREbwU8IK3E2dbniA7v-Monivqfchp9A"], ["Kennedy", 2100, -32.88958, -60.711721, "1Jnqb8Lhm5JRNEenP8hssEpOVuJop_w28"], ["Kennedy", 2100, -32.889748, -60.711227, "1MqUCli5twS60Zxwivjzxk2VOrtsPm20o"], ["Kennedy", 2100, -32.889442, -60.711072, "1Mpdnn1veSLVKvpgeUOJKamRPez8ayDXB"], ["Kennedy", 2100, -32.889487, -60.710988, "1F460nJEAGmDIkQI5fIbaxwG5em0FAeOG"], ["Kennedy", 2100, -32.889667, -60.710426, "1A_R3RVjKwResN7ZQoI9BBzetxeq-5O9z"], ["Kennedy", 2100, -32.889664, -60.71016, "13a5eFzr8iiRos1REd_M5cAJTmS05X5_1"], ["Kennedy", 2100, -32.889258, -60.70971, "1GM5Qoww6qTBDu7n_meECpwzXnSOavQlr"]];
+// calle, altura, tipo, lat, lon, antes, despues, fecha, desc (generado desde la planilla)
+// Pegá acá el enlace de tu planilla de Google Sheets (compartida como "Cualquier persona con el enlace puede ver").
+// Si queda vacío, el mapa usa los datos incrustados abajo.
+const SHEET_URL='https://docs.google.com/spreadsheets/d/1Qu_LoPoeBM-GnkYX1NCl_V97fH9bF5h8I1-xYwhu2hs/edit?gid=0#gid=0';
+const REFRESH_MS=60000; // actualización automática cada 60 s
+let DATA=[{"calle": "Bardas", "altura": "2057", "tipo": "", "lat": -32.892768, "lon": -60.707468, "antes": "1qaJcCuL152QrC-S7DWo1A3LNtfbeZqIk", "despues": "", "fecha": "", "desc": ""}, {"calle": "Guido y spano", "altura": "2461", "tipo": "", "lat": -32.891742, "lon": -60.708085, "antes": "1Rv3738_Wugw0AlAnNa2UalYSXVr8oxEJ", "despues": "", "fecha": "", "desc": ""}, {"calle": "Guido y spano", "altura": "2500", "tipo": "", "lat": -32.889762, "lon": -60.70908, "antes": "1G3Zp_cKve0NDqvAAYBM68FXoPmbfkQpt", "despues": "", "fecha": "", "desc": ""}, {"calle": "Masana", "altura": "2553", "tipo": "", "lat": -32.890253, "lon": -60.709441, "antes": "1W3CQM0LmDFex_1s1wkyZItXnHuRCst5H", "despues": "", "fecha": "", "desc": ""}, {"calle": "Ludueña", "altura": "2185", "tipo": "", "lat": -32.893285, "lon": -60.709993, "antes": "1fixHKWFPeNRPwtm2u7c7Giejf4Myaq86", "despues": "", "fecha": "", "desc": ""}, {"calle": "Herrero miranda", "altura": "2500", "tipo": "", "lat": -32.891745, "lon": -60.710659, "antes": "1IvJaMYYNZptb_Dta7Zv4RuIs_9DCH9UK", "despues": "", "fecha": "", "desc": ""}, {"calle": "Carcova", "altura": "2230", "tipo": "", "lat": -32.890212, "lon": -60.71147, "antes": "1K2ts1l4bexJuoTyIpzGqCT6GeUcrGWxA", "despues": "", "fecha": "", "desc": ""}, {"calle": "J. Nicolas", "altura": "2500", "tipo": "", "lat": -32.890657, "lon": -60.712407, "antes": "1DvbtGWbwSnzGGGH18Wdj2yMahNl30Yf5", "despues": "", "fecha": "", "desc": ""}, {"calle": "Schiaffino", "altura": "2250", "tipo": "", "lat": -32.890667, "lon": -60.71185, "antes": "1LoyEREtn8pUhEUliX6oeneDfma6pE-tL", "despues": "", "fecha": "", "desc": ""}, {"calle": "Ana frank", "altura": "532", "tipo": "", "lat": -32.891119, "lon": -60.711693, "antes": "1wd673fjtiKEmgmMhZbBBHhztlNx3GUxG", "despues": "", "fecha": "", "desc": ""}, {"calle": "Ana frank", "altura": "2350", "tipo": "", "lat": -32.893271, "lon": -60.711498, "antes": "1lsPn8i5739x9tDXC1_AuOOwiPOlP6Za4", "despues": "", "fecha": "", "desc": ""}, {"calle": "J. Nicolas", "altura": "2326", "tipo": "", "lat": -32.892885, "lon": -60.712188, "antes": "1TpPzoIg666pB2LAT-5Z7hwIKGPZlYEVd", "despues": "", "fecha": "", "desc": ""}, {"calle": "Carmignani", "altura": "2552", "tipo": "", "lat": -32.890298, "lon": -60.710063, "antes": "17Z7mnEWHdaQZgnLQVZF53VtmbUs2PkFF", "despues": "", "fecha": "", "desc": ""}, {"calle": "Masana", "altura": "2526", "tipo": "", "lat": -32.890877, "lon": -60.709595, "antes": "1JxC6JgswZW7usYFgzPtexO00OW5CB6nk", "despues": "", "fecha": "", "desc": ""}, {"calle": "Herrero miranda", "altura": "2485", "tipo": "", "lat": -32.892108, "lon": -60.710504, "antes": "1DagkqVrmmsozeVj-4zw8rTTducnSBJ47", "despues": "", "fecha": "", "desc": ""}, {"calle": "Bardas", "altura": "2109", "tipo": "", "lat": -32.892785, "lon": -60.708707, "antes": "1_V4_suTGz0kzOiujyXTCydE1nflCnvvj", "despues": "", "fecha": "", "desc": ""}, {"calle": "Bardas", "altura": "2137", "tipo": "", "lat": -32.892777, "lon": -60.709441, "antes": "1IeDK-_ct4vReez8c6WdeE2Op1wgXqkZ3", "despues": "", "fecha": "", "desc": ""}, {"calle": "Bardas", "altura": "2145", "tipo": "", "lat": -32.892743, "lon": -60.709542, "antes": "16nsE1geredTwRJwHJU9NMF02Yh6PQ8RR", "despues": "", "fecha": "", "desc": ""}, {"calle": "Bardas", "altura": "2189", "tipo": "", "lat": -32.89272, "lon": -60.71044, "antes": "1G7Xd_tcaRkWKOXEFXfAmwuU_TeRgN7cQ", "despues": "", "fecha": "", "desc": ""}, {"calle": "Ludueña", "altura": "1886", "tipo": "", "lat": -32.893395, "lon": -60.70769, "antes": "1TrDtjEs3Idux3TrIN0QmdUxetjPupmjj", "despues": "", "fecha": "", "desc": ""}, {"calle": "Zerva", "altura": "2506", "tipo": "", "lat": -32.89187, "lon": -60.713443, "antes": "18tYEvL2y_jbv1XnHabcTdYO9dI8a-PH9", "despues": "", "fecha": "", "desc": ""}, {"calle": "Zerva", "altura": "2462", "tipo": "", "lat": -32.892553, "lon": -60.713642, "antes": "15rOAyslajWA03hO76NQHkvEW8_BwXftM", "despues": "", "fecha": "", "desc": ""}, {"calle": "Zerva", "altura": "2462", "tipo": "", "lat": -32.892757, "lon": -60.713917, "antes": "1RfGLKwIImknk6e5lWuiOsUHR5b2M0I--", "despues": "", "fecha": "", "desc": ""}, {"calle": "Zerva", "altura": "2347", "tipo": "", "lat": -32.892982, "lon": -60.713475, "antes": "1lmgvw9Saf68phEnmPEgj_4sjqvneC8HW", "despues": "", "fecha": "", "desc": ""}, {"calle": "Fontana", "altura": "2330", "tipo": "", "lat": -32.89307, "lon": -60.713913, "antes": "1W3QaSum1iBa9geeKE5yKalN2o_aH4yOz", "despues": "", "fecha": "", "desc": ""}, {"calle": "Brazilia", "altura": "2589", "tipo": "", "lat": -32.890367, "lon": -60.714672, "antes": "1cfLVnnV0I9ZoH_8uDs6fpOc8oAvNmG28", "despues": "", "fecha": "", "desc": ""}, {"calle": "Brazilia", "altura": "2612", "tipo": "", "lat": -32.890596, "lon": -60.714637, "antes": "1aWGEv139GXRrnadW9jbbRmL-swP8lDIW", "despues": "", "fecha": "", "desc": ""}, {"calle": "Brazilia", "altura": "2552", "tipo": "", "lat": -32.890808, "lon": -60.714577, "antes": "1kdzIhP7noTs-KdleXWVPigpE9btQ31Cl", "despues": "", "fecha": "", "desc": ""}, {"calle": "Brazilia", "altura": "2540", "tipo": "", "lat": -32.891043, "lon": -60.714577, "antes": "19nS-EAOENX1CReJq7CwBgUm8p_h_74nk", "despues": "", "fecha": "", "desc": ""}, {"calle": "Brazilia", "altura": "2380", "tipo": "", "lat": -32.89283, "lon": -60.714564, "antes": "1FaYKzNh7L4VOb7OASle_pwgtt6LU_l-0", "despues": "", "fecha": "", "desc": ""}, {"calle": "Brasilia", "altura": "2374", "tipo": "", "lat": -32.892902, "lon": -60.714553, "antes": "1G9D-5qXKeIGpp-H92dXaJvmhc6RhYaEK", "despues": "", "fecha": "", "desc": ""}, {"calle": "Camañ", "altura": "2400", "tipo": "", "lat": -32.893127, "lon": -60.716422, "antes": "1hbxsoQz8TNV8zZTm1QhFGgtuBcnsttbc", "despues": "", "fecha": "", "desc": ""}, {"calle": "Camaña", "altura": "2400", "tipo": "", "lat": -32.893342, "lon": -60.716248, "antes": "1LN-Vagyh6H3JiORcDUEh5k0b8Q9f8qZa", "despues": "", "fecha": "", "desc": ""}, {"calle": "Camaña", "altura": "2312", "tipo": "", "lat": -32.89365, "lon": -60.716284, "antes": "10TNpa8ZQNdFPNjDoFDNHbC0YSywyA5Zg", "despues": "", "fecha": "", "desc": ""}, {"calle": "Fornells", "altura": "2338", "tipo": "", "lat": -32.892022, "lon": -60.717215, "antes": "18rRHM0ArrZXojsx-vvfkEwYazTnI8JoF", "despues": "", "fecha": "", "desc": ""}, {"calle": "Fornells", "altura": "2402", "tipo": "", "lat": -32.891921, "lon": -60.716951, "antes": "1UlgVeUQuD5HPR54NaD7RWEMb1NhGJEPa", "despues": "", "fecha": "", "desc": ""}, {"calle": "Fornells", "altura": "2426", "tipo": "", "lat": -32.891404, "lon": -60.716718, "antes": "147xv_5dP8djS70Jkymv5J_ReZaXi4lm0", "despues": "", "fecha": "", "desc": ""}, {"calle": "Fornells", "altura": "2440", "tipo": "", "lat": -32.891155, "lon": -60.716433, "antes": "1bs0I3yAG92LoseKZ39jxND8IPgKlhCoz", "despues": "", "fecha": "", "desc": ""}, {"calle": "Fornells", "altura": "2577", "tipo": "", "lat": -32.890762, "lon": -60.715985, "antes": "1N_qrknxu6AIOC3hWeVD4ex5nJ8qbeLJ7", "despues": "", "fecha": "", "desc": ""}, {"calle": "Fornells", "altura": "2577", "tipo": "", "lat": -32.89054, "lon": -60.715883, "antes": "1kSTMG7xFqSS0MpiLr4MZ3IbrIhxGzY69", "despues": "", "fecha": "", "desc": ""}, {"calle": "Pagano", "altura": "2551", "tipo": "", "lat": -32.890358, "lon": -60.715996, "antes": "18cM6_XKM1AaH-Qvb1g_d5b85cFDg5xES", "despues": "", "fecha": "", "desc": ""}, {"calle": "Pagano", "altura": "2500", "tipo": "", "lat": -32.890402, "lon": -60.715997, "antes": "1Hpt6R_G_bQAtUL7cbVhp966tpYNZcO7-", "despues": "", "fecha": "", "desc": ""}, {"calle": "Pagano", "altura": "2500", "tipo": "", "lat": -32.890412, "lon": -60.716012, "antes": "1OFS0seGBSUnlzKTitNlLO_RT-RaMDkLZ", "despues": "", "fecha": "", "desc": ""}, {"calle": "Pagano", "altura": "2500", "tipo": "", "lat": -32.890969, "lon": -60.715536, "antes": "1h5Wa4p7NLCQM6s6aZ3MLPinmFQdw9yes", "despues": "", "fecha": "", "desc": ""}, {"calle": "Castex", "altura": "2549", "tipo": "", "lat": -32.892063, "lon": -60.716762, "antes": "1bct4iJz2Djh8m1MyoLYtrNWKeUtsN8oX", "despues": "", "fecha": "", "desc": ""}, {"calle": "Castex", "altura": "2500", "tipo": "", "lat": -32.891958, "lon": -60.716852, "antes": "1wvgXTEzaxAi1GbtUN4T4m6YfMv7YOu18", "despues": "", "fecha": "", "desc": ""}, {"calle": "Schiavoni", "altura": "2586", "tipo": "", "lat": -32.890532, "lon": -60.715215, "antes": "1XVH6AOwF8n-4jono9rCiXPChm3HDM7KW", "despues": "", "fecha": "", "desc": ""}, {"calle": "Carcova", "altura": "2400", "tipo": "", "lat": -32.890223, "lon": -60.715062, "antes": "1_bLLmLUv2VLVi35t2Q_htc5PGygEc05X", "despues": "", "fecha": "", "desc": ""}, {"calle": "Carcova", "altura": "2400", "tipo": "", "lat": -32.890218, "lon": -60.715253, "antes": "1BIXTNxvOymlaLQM8VAmPb1hpZEn1I4wF", "despues": "", "fecha": "", "desc": ""}, {"calle": "Carcova", "altura": "2450", "tipo": "", "lat": -32.890257, "lon": -60.715273, "antes": "1YMu8fQgjY_SZtjpFt3Jxm6lITltv0B4o", "despues": "", "fecha": "", "desc": ""}, {"calle": "Carcova", "altura": "2400", "tipo": "", "lat": -32.890328, "lon": -60.714718, "antes": "1pivtG8BycpBB9JErx02ASX1XDMePi3Ka", "despues": "", "fecha": "", "desc": ""}, {"calle": "Carcova", "altura": "2300", "tipo": "", "lat": -32.890155, "lon": -60.714278, "antes": "1fWB_XuLjsMInwMZvmuwkgD3f4xWaZSdS", "despues": "", "fecha": "", "desc": ""}, {"calle": "Baigorria", "altura": "2630", "tipo": "", "lat": -32.893569, "lon": -60.718652, "antes": "1ASCuMO8ECNZ0CS5pRI9aTfKtkBW0Vd3v", "despues": "", "fecha": "", "desc": ""}, {"calle": "Baigorria", "altura": "2630", "tipo": "", "lat": -32.893482, "lon": -60.71868, "antes": "1nPO2sondyafNDdfh4mYhDfL1pchyhFvp", "despues": "", "fecha": "", "desc": ""}, {"calle": "Baigorria", "altura": "2630", "tipo": "", "lat": -32.89261, "lon": -60.718264, "antes": "1lTgwCfsiWHHGmVGybPG0SKwm1SoA4ySz", "despues": "", "fecha": "", "desc": ""}, {"calle": "Baigorria", "altura": "2630", "tipo": "", "lat": -32.893468, "lon": -60.718653, "antes": "1xmJf4LfPDWkisvJjLbDD5Aj9yUm17z0F", "despues": "", "fecha": "", "desc": ""}, {"calle": "Baigorria", "altura": "2630", "tipo": "", "lat": -32.893162, "lon": -60.719147, "antes": "162Kk5DLzKxtnkbPSveRcric0g0bX_tE8", "despues": "", "fecha": "", "desc": ""}, {"calle": "Baigorria", "altura": "2630", "tipo": "", "lat": -32.893044, "lon": -60.717962, "antes": "1W45V81OX77Xh22vMSr7PDXMLH5xyExgp", "despues": "", "fecha": "", "desc": ""}, {"calle": "Juan pablo ll", "altura": "2500", "tipo": "", "lat": -32.892526, "lon": -60.718257, "antes": "1E3nKjauitjBgI69cuRmodPPARJeRSkOH", "despues": "", "fecha": "", "desc": ""}, {"calle": "Juan pablo ll", "altura": "2500 bis", "tipo": "", "lat": -32.892259, "lon": -60.718127, "antes": "1J_q3i8L12tmffTyplysZgF4u3X8migly", "despues": "", "fecha": "", "desc": ""}, {"calle": "Juan pablo ll", "altura": "2358", "tipo": "", "lat": -32.892268, "lon": -60.718, "antes": "1B4DmxkLKv571I-xc-F6PO5NkAzuAEzkk", "despues": "", "fecha": "", "desc": ""}, {"calle": "Juan pablo ll", "altura": "2366", "tipo": "", "lat": -32.892079, "lon": -60.7177, "antes": "1hs5Cr3XPI50kpMh6BIgugLY0mdG6_S7q", "despues": "", "fecha": "", "desc": ""}, {"calle": "Juan pablo ll", "altura": "2388", "tipo": "", "lat": -32.891936, "lon": -60.717641, "antes": "1EUcbW1X8wKG-acAqMc57cpUq0IcME6Rd", "despues": "", "fecha": "", "desc": ""}, {"calle": "Juan pablo ll", "altura": "2388", "tipo": "", "lat": -32.891792, "lon": -60.717548, "antes": "1etiuBrPbQkYE6xP8pE8TG3JTu8XYWchV", "despues": "", "fecha": "", "desc": ""}, {"calle": "Juan pablo ll", "altura": "2402", "tipo": "", "lat": -32.891658, "lon": -60.717429, "antes": "1tQ7X6dhL85RB2aGvGnevMRHglgTK91v3", "despues": "", "fecha": "", "desc": ""}, {"calle": "Juan pablo ll", "altura": "2408", "tipo": "", "lat": -32.891421, "lon": -60.717307, "antes": "1dMknaYCgAmeRWlqW0zWvFZ4C67SWcOy_", "despues": "", "fecha": "", "desc": ""}, {"calle": "Juan pablo ll", "altura": "2414", "tipo": "", "lat": -32.891292, "lon": -60.717253, "antes": "1IZV-obU0xjhE0vp3FYNCpQeUP6FV-b7Y", "despues": "", "fecha": "", "desc": ""}, {"calle": "Juan pablo ll", "altura": "2432", "tipo": "", "lat": -32.891235, "lon": -60.717103, "antes": "1QWWNzl2Th4jmM_is2eX-Py7ZBQiLhY7f", "despues": "", "fecha": "", "desc": ""}, {"calle": "Juan pablo ll", "altura": "2440", "tipo": "", "lat": -32.890879, "lon": -60.716811, "antes": "1zU8fEwdPiVbcDr6kGvMeMgRAR-lQFLL0", "despues": "", "fecha": "", "desc": ""}, {"calle": "Juan pablo ll", "altura": "2446", "tipo": "", "lat": -32.890922, "lon": -60.716819, "antes": "1wuus542Ma7N9gO-FXOeTaQG5epDokxk5", "despues": "", "fecha": "", "desc": ""}, {"calle": "Juan pablo ll", "altura": "2560", "tipo": "", "lat": -32.890802, "lon": -60.7167, "antes": "1GTDG01FAdtf-bo0DJVE38TdsDVMlYstK", "despues": "", "fecha": "", "desc": ""}, {"calle": "Juan pablo ll", "altura": "2576", "tipo": "", "lat": -32.890551, "lon": -60.716431, "antes": "1_mo-0R4g2NnwTfuLskTONXVpjFJmVDFw", "despues": "", "fecha": "", "desc": ""}, {"calle": "Juan pablo ll", "altura": "22584", "tipo": "", "lat": -32.890376, "lon": -60.716474, "antes": "1c7IgPlBp_s35PsWLZlGDBBLbbo_Iyoyl", "despues": "", "fecha": "", "desc": ""}, {"calle": "Juan pablo ll", "altura": "2600", "tipo": "", "lat": -32.890093, "lon": -60.715926, "antes": "1D7_AewZm0NwChDBhNhpO9jJczJP2RlMh", "despues": "", "fecha": "", "desc": ""}, {"calle": "Juan pablo ll", "altura": "2600", "tipo": "", "lat": -32.890005, "lon": -60.715824, "antes": "1DFKCwtcPXyWIBmJLh_sBICT1Gpyj7ykY", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2300", "tipo": "", "lat": -32.88975, "lon": -60.715546, "antes": "1W2pYcmX_e5xnrJa9eNms3wvejJWjEduH", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2300", "tipo": "", "lat": -32.889474, "lon": -60.715174, "antes": "1O8EVzjo3xxuDHuWd-7xjJ8uiHUMCKSsg", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2300", "tipo": "", "lat": -32.889678, "lon": -60.714525, "antes": "1k-0h-3hPO84wE_jPNoKAna3Jo6hN46_Y", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2300", "tipo": "", "lat": -32.889743, "lon": -60.7142, "antes": "12EqColUOKJ-8UBSgh55kd_pzMBjV_aR3", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2200", "tipo": "", "lat": -32.889758, "lon": -60.713827, "antes": "1aagOtTgL8UsB1by5R7OxgZdS26oI0QuR", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2200", "tipo": "", "lat": -32.889798, "lon": -60.71364, "antes": "1FgDf2u99fFjdVfGnY44KrLN63jMh1cQD", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2200", "tipo": "", "lat": -32.889875, "lon": -60.713233, "antes": "1zeTfvA9yzJ60x2GdqP-YrkxpUxiEeSJa", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2200", "tipo": "", "lat": -32.889783, "lon": -60.713105, "antes": "1W8WVjajykry2qmovPlC925MCremPWEVN", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2200", "tipo": "", "lat": -32.889384, "lon": -60.712591, "antes": "124TEMO4a-V3xB7fhXXdyShAAQRS3k6pg", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2200", "tipo": "", "lat": -32.889712, "lon": -60.712283, "antes": "1WjZebgimSlNY4Sn-6zJUX68uPXVEFvY3", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2200", "tipo": "", "lat": -32.88976, "lon": -60.713048, "antes": "1zaNdSgmAuF9URmrvawm7gmG6UfZVmic0", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2200", "tipo": "", "lat": -32.8894, "lon": -60.713132, "antes": "1BpWzDRHVQz1nF73aX3tb55ryHmAj4lcW", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2200", "tipo": "", "lat": -32.889769, "lon": -60.713191, "antes": "1ig075ey9TFyRnPEJ2dCfMw7IbttjLsrX", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2200", "tipo": "", "lat": -32.88981, "lon": -60.713027, "antes": "1g5b9pt3eHQ67k2Fzi6RMW1oWV4FfMIYg", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2200", "tipo": "", "lat": -32.889903, "lon": -60.712737, "antes": "1n6Gaz-3sihw15uXWOBgWvbgPxNoSCLJG", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2200", "tipo": "", "lat": -32.889787, "lon": -60.713147, "antes": "1UDQwenjxDAoTYtOJRkZLPQOsQjkbBmP9", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2200", "tipo": "", "lat": -32.889665, "lon": -60.711973, "antes": "1o7wv_ETpfo9BcosyOVtaYhAx-YfAC1jT", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2200", "tipo": "", "lat": -32.889525, "lon": -60.711907, "antes": "1ZREbwU8IK3E2dbniA7v-Monivqfchp9A", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2100", "tipo": "", "lat": -32.88958, "lon": -60.711721, "antes": "1Jnqb8Lhm5JRNEenP8hssEpOVuJop_w28", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2100", "tipo": "", "lat": -32.889748, "lon": -60.711227, "antes": "1MqUCli5twS60Zxwivjzxk2VOrtsPm20o", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2100", "tipo": "", "lat": -32.889442, "lon": -60.711072, "antes": "1Mpdnn1veSLVKvpgeUOJKamRPez8ayDXB", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2100", "tipo": "", "lat": -32.889487, "lon": -60.710988, "antes": "1F460nJEAGmDIkQI5fIbaxwG5em0FAeOG", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2100", "tipo": "", "lat": -32.889667, "lon": -60.710426, "antes": "1A_R3RVjKwResN7ZQoI9BBzetxeq-5O9z", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2100", "tipo": "", "lat": -32.889664, "lon": -60.71016, "antes": "13a5eFzr8iiRos1REd_M5cAJTmS05X5_1", "despues": "", "fecha": "", "desc": ""}, {"calle": "Kennedy", "altura": "2100", "tipo": "", "lat": -32.889258, "lon": -60.70971, "antes": "1GM5Qoww6qTBDu7n_meECpwzXnSOavQlr", "despues": "", "fecha": "", "desc": ""}];
+const COLORS={'Columna':'#ff8a1f','Transversal':'#3b9cff','Sin dato':'#8892a0'};
+const norm=t=>{t=(t||'').toLowerCase();return t.includes('transv')?'Transversal':t.includes('col')?'Columna':t?t.charAt(0).toUpperCase()+t.slice(1):'Sin dato'};
+const colorOf=c=>COLORS[c]||'#b07cff';
 const map=L.map('map');
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
+const carto=L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd',attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'}).addTo(map);
+const osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'});
+const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Tiles &copy; Esri'});
+L.control.layers({'Calles (datos OpenStreetMap)':carto,'OpenStreetMap estándar (solo en web)':osm,'Satélite':sat}).addTo(map);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const thumb=id=>'https://drive.google.com/thumbnail?id='+id+'&sz=w700';
+const view=id=>'https://drive.google.com/file/d/'+id+'/view';
+function photo(id,label){
+  if(!id) return '<div class="ph" data-k="'+label+'">Foto de "'+label+'" pendiente</div>';
+  return '<div class="ph" data-k="'+label+'"><a href="'+view(id)+'" target="_blank" rel="noopener" style="display:block;width:100%;height:100%"><img loading="lazy" alt="'+label+'" src="'+thumb(id)+'"></a></div>';
+}
+function popup(p){
+  let h='<div class="card"><h3>'+esc(p.calle)+'</h3>';
+  if(p.altura) h+='<div class="alt">Altura '+esc(p.altura)+'</div>';
+  h+='<span class="badge" style="--c:'+colorOf(p.cat)+'"><i></i>'+esc(p.cat)+'</span>';
+  h+='<div class="tabs"><button class="on" data-t="Antes">Antes</button><button data-t="Después">Después</button></div>';
+  h+=photo(p.antes,'Antes')+photo(p.despues,'Después').replace('class="ph"','class="ph" hidden');
+  h+='<div class="meta">';
+  if(p.fecha) h+='<span>'+esc(p.fecha)+'</span>';
+  if(p.desc) h+='<span class="d">'+esc(p.desc)+'</span>';
+  h+='<span><b>Coordenadas:</b> '+p.lat.toFixed(6)+', '+p.lon.toFixed(6)+'</span></div>';
+  if(p.antes) h+='<a class="open" href="'+view(p.antes)+'" target="_blank" rel="noopener">Abrir foto original</a>';
+  return h+'</div>';
+}
 const group=L.featureGroup().addTo(map);
-const items=DATA.map(([calle,alt,lat,lon,id])=>{
-  const view='https://drive.google.com/file/d/'+id+'/view';
-  const html='<div class="pop"><h3>'+esc(calle)+' '+esc(alt)+'</h3>'+
-   '<a href="'+view+'" target="_blank" rel="noopener"><img loading="lazy" alt="Foto '+esc(calle)+' '+esc(alt)+'" src="https://drive.google.com/thumbnail?id='+id+'&sz=w600"></a>'+
-   '<a href="'+view+'" target="_blank" rel="noopener">Abrir foto original</a></div>';
-  const m=L.marker([lat,lon]).bindPopup(html,{minWidth:260}).bindTooltip(calle+' '+alt);
-  m.addTo(group);
-  return {m,txt:(calle+' '+alt).toLowerCase()};
+let items=[];
+function build(){
+  items.forEach(i=>group.removeLayer(i.m));
+  DATA.forEach(p=>p.cat=norm(p.tipo));
+  items=DATA.map(p=>{
+    const icon=L.divIcon({className:'',html:'<span class="pin" style="--c:'+colorOf(p.cat)+'"></span>',iconSize:[20,20],iconAnchor:[10,20],popupAnchor:[0,-20]});
+    const m=L.marker([p.lat,p.lon],{icon}).bindPopup(()=>popup(p),{minWidth:300,maxWidth:300}).bindTooltip(p.calle+' '+p.altura);
+    return {p,m,txt:[p.calle,p.altura,p.desc,p.cat].join(' ').toLowerCase()};
+  });
+}
+map.on('popupopen',e=>{
+  const root=e.popup.getElement();
+  root.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{
+    root.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+    root.querySelectorAll('.ph').forEach(ph=>ph.hidden=ph.dataset.k!==b.dataset.t);
+  }));
 });
-map.fitBounds(group.getBounds().pad(.1));
-const n=document.getElementById('n'),q=document.getElementById('q');
-n.textContent=items.length;
-q.addEventListener('input',()=>{
-  const t=q.value.trim().toLowerCase();let c=0;
-  items.forEach(i=>{const ok=!t||i.txt.includes(t);ok?(group.addLayer(i.m),c++):group.removeLayer(i.m)});
-  n.textContent=c;
-  if(t&&c)map.fitBounds(L.featureGroup(items.filter(i=>group.hasLayer(i.m)).map(i=>i.m)).getBounds().pad(.2),{maxZoom:18});
-});
+// filtros
+let cats=[],counts={};
+function stats(){
+  cats=['Columna','Transversal','Sin dato'].concat([...new Set(DATA.map(p=>p.cat))].filter(c=>!COLORS[c]));
+  counts={};DATA.forEach(p=>counts[p.cat]=(counts[p.cat]||0)+1);
+}
+let off=new Set();
+const chips=document.getElementById('chips');
+const LABEL={'Columna':'Columnas','Transversal':'Transversales'};
+function drawChips(){
+  chips.innerHTML='';
+  cats.filter(c=>counts[c]).forEach(c=>{
+    const l=document.createElement('label');l.className='chk';
+    const cb=document.createElement('input');cb.type='checkbox';cb.checked=!off.has(c);
+    cb.onchange=()=>{cb.checked?off.delete(c):off.add(c);apply(true)};
+    l.appendChild(cb);
+    l.insertAdjacentHTML('beforeend','<i style="--c:'+colorOf(c)+'"></i><span>'+esc(LABEL[c]||c)+'</span><em>'+counts[c]+'</em>');
+    chips.appendChild(l);
+  });
+}
+const $=id=>document.getElementById(id),q=$('q'),tbody=$('tbody');
+let visible=[];
+function apply(fit){
+  const t=q.value.trim().toLowerCase();
+  visible=items.filter(i=>!off.has(i.p.cat)&&(!t||i.txt.includes(t)));
+  items.forEach(i=>group.removeLayer(i.m));
+  visible.forEach(i=>group.addLayer(i.m));
+  $('sMapa').textContent=visible.length;
+  tbody.innerHTML='';
+  visible.forEach(i=>{
+    const p=i.p,tr=document.createElement('tr');
+    tr.innerHTML='<td>'+esc(p.calle)+'</td><td>'+esc(p.altura)+'</td><td><span class="badge" style="--c:'+colorOf(p.cat)+';margin:0"><i></i>'+esc(p.cat)+'</span></td><td>'+esc(p.fecha)+'</td><td>'+esc(p.desc)+'</td>';
+    tr.onclick=()=>{showTabla(false);map.setView([p.lat,p.lon],18);i.m.openPopup()};
+    tbody.appendChild(tr);
+  });
+  if(fit&&visible.length)map.fitBounds(L.featureGroup(visible.map(i=>i.m)).getBounds().pad(.15),{maxZoom:18});
+}
+q.addEventListener('input',()=>apply(true));
+// tabla
+function showTabla(on){$('tabla').hidden=!on;$('btnTabla').textContent=on?'🗺 Mapa':'☰ Tabla';if(!on)setTimeout(()=>map.invalidateSize(),0)}
+$('btnTabla').onclick=()=>showTabla($('tabla').hidden);
+// estado de conexión
+function net(){const on=navigator.onLine;$('pill').classList.toggle('off',!on);$('pillTxt').textContent=on?'● En línea':'● Sin conexión'}
+addEventListener('online',net);addEventListener('offline',net);net();
+function setData(arr,fit){
+  DATA=arr;build();stats();
+  $('sTotal').textContent=DATA.length;drawChips();apply(false);
+  if(fit&&items.length)map.fitBounds(L.featureGroup(items.map(i=>i.m)).getBounds().pad(.1));
+}
+// lectura online de Google Sheets
+function parseCSV(t){
+  const rows=[];let r=[],c='',q=false;
+  for(let i=0;i<t.length;i++){const ch=t[i];
+    if(q){if(ch==='"'){if(t[i+1]==='"'){c+='"';i++}else q=false}else c+=ch}
+    else if(ch==='"')q=true;
+    else if(ch===','){r.push(c);c=''}
+    else if(ch==='\n'){r.push(c);rows.push(r);r=[];c=''}
+    else if(ch!=='\r')c+=ch}
+  if(c||r.length){r.push(c);rows.push(r)}
+  return rows;
+}
+function fromRows(rows){
+  const h=rows[0].map(x=>x.trim().toLowerCase());
+  const ix=(keys,ex=[])=>h.findIndex(x=>keys.some(k=>x.includes(k))&&!ex.some(e=>x.includes(e)));
+  const C={calle:ix(['calle']),altura:ix(['altura']),tipo:ix(['tipo']),lat:ix(['lat']),lon:ix(['lon']),antes:ix(['foto','antes'],['despu']),despues:ix(['despu']),fecha:ix(['fecha']),desc:ix(['descr','observ','nota'])};
+  if(C.lat<0||C.lon<0)throw new Error('columnas');
+  const num=v=>parseFloat(String(v||'').replace(',','.'));
+  const fid=v=>{const m=String(v||'').match(/\/d\/([\w-]+)/)||String(v||'').match(/id=([\w-]+)/);return m?m[1]:''};
+  const g=(r,k)=>C[k]>=0&&r[C[k]]!=null?String(r[C[k]]).trim().replace(/\.0$/,''):'';
+  return rows.slice(1).map(r=>({calle:g(r,'calle'),altura:g(r,'altura'),tipo:g(r,'tipo'),lat:num(r[C.lat]),lon:num(r[C.lon]),
+    antes:fid(r[C.antes]),despues:C.despues>=0?fid(r[C.despues]):'',fecha:g(r,'fecha'),desc:g(r,'desc')})).filter(p=>isFinite(p.lat)&&isFinite(p.lon));
+}
+let busy=false;
+async function loadSheet(first){
+  if(!SHEET_URL||busy)return;busy=true;$('refresh').style.opacity=.5;
+  const m=SHEET_URL.match(/\/d\/([\w-]+)/),gid=SHEET_URL.match(/[#&?]gid=(\d+)/);
+  let url=m?'https://docs.google.com/spreadsheets/d/'+m[1]+'/gviz/tq?tqx=out:csv'+(gid?'&gid='+gid[1]:''):SHEET_URL;
+  url+=(url.includes('?')?'&':'?')+'_='+Date.now();
+  try{
+    const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(r.status);
+    const arr=fromRows(parseCSV(await r.text()));if(!arr.length)throw new Error('vacía');
+    if(JSON.stringify(arr)!==JSON.stringify(DATA))setData(arr,first);
+    $('pill').classList.remove('off');$('pillTxt').textContent='● En línea · '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){
+    $('pill').classList.add('off');$('pillTxt').textContent='● Sin acceso a la planilla';
+  }
+  busy=false;$('refresh').style.opacity=1;
+}
+$('refresh').onclick=()=>SHEET_URL?loadSheet(false):location.reload();
+setData(DATA,true);
+loadSheet(true);
+if(SHEET_URL)setInterval(()=>loadSheet(false),REFRESH_MS);
 </script></body></html>
