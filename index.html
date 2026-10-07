@@ -10,7 +10,8 @@ html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",sa
 body{display:flex;flex-direction:column}
 header{display:flex;align-items:center;gap:14px;padding:8px 14px;background:var(--bg);border-bottom:1px solid var(--line);flex-wrap:wrap}
 .logo{background:#fff;border-radius:8px;height:42px;min-width:114px;display:flex;align-items:center;justify-content:center;padding:0 10px;overflow:hidden}
-.logo img{max-height:32px;max-width:110px;display:block}
+.logo{padding:0;background:transparent}
+.logo img{height:42px;width:auto;display:block;border-radius:8px}
 .logo .wm{font:800 17px/1 system-ui,sans-serif;letter-spacing:.5px;color:#14338f;font-style:italic}
 .ttl{min-width:0;flex:1 1 220px}
 .ttl b{display:block;font-size:15px}
@@ -62,6 +63,8 @@ header{display:flex;align-items:center;gap:14px;padding:8px 14px;background:var(
 .open{display:inline-block;margin-top:10px;font-size:12px;color:var(--acc)}
 #tabla{position:absolute;inset:0;z-index:1100;background:var(--bg);overflow:auto;padding:12px 14px}
 #tabla[hidden]{display:none}
+.tools{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;font-size:12px;color:var(--mut)}
+.tools .btn{color:var(--fg);border-color:var(--acc)}
 table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
 th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
 th{position:sticky;top:-12px;background:var(--bg);color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
@@ -70,7 +73,7 @@ tbody tr:hover{background:var(--bg2)}
 @media(max-width:560px){.ttl small.dim{display:none}.stat{padding:4px 10px}}
 </style></head><body>
 <header>
-  <div class="logo"><img id="logo" src="logo.png" alt="Autotrol" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'wm',textContent:'AUTOTROL'}))"></div>
+  <div class="logo"><img id="logo" src="data:image/png;base64,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" alt="Autotrol" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'wm',textContent:'AUTOTROL'}))"></div>
   <div class="ttl"><b>Mapa de Robos</b><small>Inspección de artefactos</small><small class="dim">Desarrollado por Martin Cipriani · Versión 2.0</small></div>
   <div class="stats">
     <div class="stat"><b id="sTotal">0</b><span>Total</span></div>
@@ -86,7 +89,7 @@ tbody tr:hover{background:var(--bg2)}
     <div class="chips" id="chips"></div>
     <input id="q" type="search" placeholder="Buscar calle, altura o descripción...">
   </div>
-  <div id="tabla" hidden><table><thead><tr><th>Calle</th><th>Altura</th><th>Tipo</th><th>Fecha</th><th>Descripción</th></tr></thead><tbody id="tbody"></tbody></table></div>
+  <div id="tabla" hidden><div class="tools"><span id="tcount"></span><button class="btn" id="btnCsv">⭳ Exportar CSV</button></div><table><thead><tr><th>Calle</th><th>Altura</th><th>Tipo</th><th>Fecha</th><th>Descripción</th></tr></thead><tbody id="tbody"></tbody></table></div>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -169,7 +172,7 @@ function apply(fit){
   visible=items.filter(i=>!off.has(i.p.cat)&&(!t||i.txt.includes(t)));
   items.forEach(i=>group.removeLayer(i.m));
   visible.forEach(i=>group.addLayer(i.m));
-  $('sMapa').textContent=visible.length;
+  $('sMapa').textContent=visible.length;$('tcount').textContent=visible.length+' registros';
   tbody.innerHTML='';
   visible.forEach(i=>{
     const p=i.p,tr=document.createElement('tr');
@@ -183,6 +186,17 @@ q.addEventListener('input',()=>apply(true));
 // tabla
 function showTabla(on){$('tabla').hidden=!on;$('btnTabla').textContent=on?'🗺 Mapa':'☰ Tabla';if(!on)setTimeout(()=>map.invalidateSize(),0)}
 $('btnTabla').onclick=()=>showTabla($('tabla').hidden);
+// exportar CSV (respeta filtros y búsqueda)
+function exportCsv(){
+  const H=['Calle','Altura','Tipo','Lat','Lon','Foto Antes','Foto Despues','Fecha','Descripcion'];
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const rows=visible.map(i=>{const p=i.p;return [p.calle,p.altura,p.cat,p.lat,p.lon,p.antes?view(p.antes):'',p.despues?view(p.despues):'',p.fecha,p.desc].map(q).join(',')});
+  const blob=new Blob(['\ufeff'+[H.map(q).join(',')].concat(rows).join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='mapa_robos_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+$('btnCsv').onclick=exportCsv;
 // estado de conexión
 function net(){const on=navigator.onLine;$('pill').classList.toggle('off',!on);$('pillTxt').textContent=on?'● En línea':'● Sin conexión'}
 addEventListener('online',net);addEventListener('offline',net);net();
